@@ -6,72 +6,55 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Galeri PNG – Teknik Sipil</title>
   <style>
-    :root{
-      --border:#e5e7eb; --muted:#6b7280; --bg:#ffffff; --bg-sub:#f9fafb; --radius:12px;
-    }
+    :root{ --border:#e5e7eb; --muted:#6b7280; --bg:#ffffff; --bg-sub:#f9fafb; --radius:12px; }
     body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:2rem;background:var(--bg);color:#111827}
     .card{border:1px solid var(--border);border-radius:var(--radius);padding:16px;max-width:980px;margin-inline:auto;background:#fff}
-    h1{margin:0 0 0.5rem 0}
-    p.hint{margin:0 0 1rem 0;color:var(--muted)}
+    h1{margin:0 0 .5rem 0}
+    p.hint{margin:.25rem 0 1rem 0;color:var(--muted)}
 
-    .viewer{
-      display:grid;gap:12px;
-      grid-template-columns: 1fr;
-    }
-
-    .main{
-      border:1px solid var(--border);border-radius:10px;background:var(--bg-sub);
-      aspect-ratio: 16 / 9; /* sesuaikan kalau perlu */
-      display:flex;align-items:center;justify-content:center;overflow:hidden;
-    }
-    .main img{
-      max-width:100%;max-height:100%;object-fit:contain;display:block;
-      transition:opacity .2s ease;
-    }
-
-    .thumbs-wrap{display:flex;align-items:center;gap:8px}
-    .scroll-btn{
-      border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer;
-      user-select:none;transition:background .15s ease;
-    }
-    .scroll-btn:hover{background:#f3f4f6}
-    .thumbs{
-      display:flex;gap:8px;overflow:auto;scroll-behavior:smooth;
-      padding:8px;border:1px solid var(--border);border-radius:10px;background:#fff;
-    }
-    .thumb{
-      flex:0 0 auto;border:1px solid var(--border);border-radius:10px;
-      width:110px;height:70px;overflow:hidden;background:var(--bg-sub);
-      position:relative;cursor:pointer;outline-offset:2px;
-    }
-    .thumb img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
-    .thumb.active{box-shadow:0 0 0 2px #2563eb inset;border-color:#2563eb}
-    .thumb .name{
-      position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);color:#fff;
-      font-size:11px;line-height:1.2;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
+    .viewer{display:grid;gap:12px;grid-template-columns:1fr}
+    .main{border:1px solid var(--border);border-radius:10px;background:var(--bg-sub);
+          aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .main img{max-width:100%;max-height:100%;object-fit:contain;display:block;transition:opacity .2s ease}
+    .title{font-weight:600}
+    .caption{color:var(--muted);font-size:14px}
 
     .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .toolbar .info{color:var(--muted);font-size:14px}
-    .btn{
-      border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer;
-    }
+    .btn{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
     .btn:hover{background:#f3f4f6}
+
+    .thumbs-wrap{display:flex;align-items:center;gap:8px}
+    .scroll-btn{border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 10px;cursor:pointer}
+    .scroll-btn:hover{background:#f3f4f6}
+    .thumbs{display:flex;gap:8px;overflow:auto;scroll-behavior:smooth;
+            padding:8px;border:1px solid var(--border);border-radius:10px;background:#fff}
+    .thumb{flex:0 0 auto;border:1px solid var(--border);border-radius:10px;
+           width:110px;height:70px;overflow:hidden;background:var(--bg-sub);position:relative;cursor:pointer}
+    .thumb img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
+    .thumb .name{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);color:#fff;
+                 font-size:11px;line-height:1.2;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .thumb.active{box-shadow:0 0 0 2px #2563eb inset;border-color:#2563eb}
     .hidden{display:none}
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>Galeri PNG (GitHub Pages)</h1>
-    <p class="hint">Letakkan file PNG di <code>/images</code>. Klik thumbnail untuk memilih. Gunakan tombol kiri/kanan untuk menggulir.</p>
+    <h1>Galeri PNG (Index JSON)</h1>
+    <p class="hint">Sumber: <code>/images/images.json</code>. Tambah gambar → update <code>images.json</code> → otomasi tampil.</p>
 
-    <div class="viewer" id="viewer">
-      <div class="main" id="main">
+    <div class="viewer">
+      <div>
+        <div class="title" id="title"></div>
+        <div class="caption" id="caption"></div>
+      </div>
+
+      <div class="main">
         <img id="mainImage" alt="Pratinjau gambar" src="" />
       </div>
 
       <div class="toolbar">
-        <button id="downloadBtn" class="btn" title="Unduh gambar saat ini">Unduh</button>
+        <button id="downloadBtn" class="btn">Unduh</button>
         <span id="meta" class="info"></span>
       </div>
 
@@ -84,5 +67,156 @@
   </div>
 
   <script>
-    // ====== KONFIGURASI SEDERHANA ======
-    // Semua file berada di /images dalam repo yang sama
+    // ===== Konfigurasi Path =====
+    // Dukung GitHub Pages "Project Pages" (mis. /nama-repo/) maupun "User Pages" (/)
+    const basePath = (function(){
+      // Jika file ini di root repo Project Pages, path awal biasanya "/nama-repo/"
+      // Untuk keamanan, pakai path awal dari lokasi saat ini.
+      const p = location.pathname;
+      // Ambil segmen pertama yang bukan kosong, mis. "/my-repo/..."
+      const seg = p.split('/').filter(Boolean)[0];
+      // Jika domain adalah username.github.io dan ada segmen repo, gunakan itu
+      // Jika tidak, tetap "/"
+      if (location.hostname.endsWith('.github.io') && seg) {
+        return '/' + seg + '/';
+      }
+      return '/';
+    })();
+
+    const IMAGES_DIR = basePath + 'images/';
+    const INDEX_JSON = IMAGES_DIR + 'images.json';
+
+    // ===== State =====
+    let files = []; // {file, title?, caption?} atau string
+    let currentIndex = 0;
+
+    const thumbsEl = document.getElementById('thumbs');
+    const mainImg = document.getElementById('mainImage');
+    const metaEl = document.getElementById('meta');
+    const titleEl = document.getElementById('title');
+    const captionEl = document.getElementById('caption');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+
+    async function loadIndex(){
+      // Tambahkan cache-buster kecil supaya update JSON cepat terambil
+      const url = INDEX_JSON + '?v=' + Date.now();
+      const res = await fetch(url, {cache:'no-store'});
+      if(!res.ok) throw new Error('Gagal memuat images.json: ' + res.status);
+      const data = await res.json();
+
+      // Normalisasi ke bentuk objek {file, title?, caption?}
+      if(Array.isArray(data)){
+        return data.map(item => {
+          if (typeof item === 'string') {
+            return { file: item };
+          } else if (item && typeof item === 'object' && item.file) {
+            return { file: item.file, title: item.title || '', caption: item.caption || '' };
+          }
+          return null;
+        }).filter(Boolean);
+      } else {
+        throw new Error('Format images.json harus berupa array');
+      }
+    }
+
+    function buildThumb(entry, index){
+      const div = document.createElement('div');
+      div.className = 'thumb';
+      div.setAttribute('role','button');
+      const label = entry.title || entry.file;
+      div.setAttribute('aria-label','Pilih gambar ' + label);
+      div.addEventListener('click', () => setActive(index));
+
+      const img = document.createElement('img');
+      img.loading = 'lazy';
+      img.alt = label;
+      img.src = IMAGES_DIR + entry.file;
+
+      const cap = document.createElement('div');
+      cap.className = 'name';
+      cap.textContent = label;
+
+      div.appendChild(img);
+      div.appendChild(cap);
+      return div;
+    }
+
+    function setActive(index){
+      currentIndex = index;
+      const entry = files[index];
+      const url = IMAGES_DIR + entry.file;
+      const label = entry.title || entry.file;
+
+      mainImg.style.opacity = 0;
+      const temp = new Image();
+      temp.onload = () => {
+        mainImg.src = url;
+        mainImg.alt = label;
+        mainImg.style.opacity = 1;
+
+        titleEl.textContent = label || '';
+        captionEl.textContent = entry.caption || '';
+
+        metaEl.textContent = `${entry.file} — ${temp.naturalWidth}×${temp.naturalHeight}px`;
+        downloadBtn.onclick = () => {
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = entry.file;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        };
+
+        [...thumbsEl.children].forEach((t,i) => t.classList.toggle('active', i===index));
+        thumbsEl.children[index]?.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+      };
+      temp.onerror = () => {
+        metaEl.textContent = `Gagal memuat: ${entry.file}`;
+      };
+      temp.src = url;
+    }
+
+    function wireScroll(){
+      leftBtn.onclick = () => thumbsEl.scrollBy({left: -300, behavior: 'smooth'});
+      rightBtn.onclick = () => thumbsEl.scrollBy({left: 300, behavior: 'smooth'});
+
+      // Navigasi keyboard
+      thumbsEl.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowRight'){ setActive(Math.min(currentIndex+1, files.length-1)); }
+        if(e.key === 'ArrowLeft'){ setActive(Math.max(currentIndex-1, 0)); }
+      });
+
+      // Swipe sederhana
+      let startX = null;
+      thumbsEl.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, {passive:true});
+      thumbsEl.addEventListener('touchmove', (e) => {
+        if(startX == null) return;
+        const dx = e.touches[0].clientX - startX;
+        thumbsEl.scrollLeft -= dx;
+        startX = e.touches[0].clientX;
+      }, {passive:true});
+      thumbsEl.addEventListener('touchend', () => { startX = null; });
+    }
+
+    async function init(){
+      try{
+        files = await loadIndex();
+        if(files.length === 0){
+          metaEl.textContent = 'Tidak ada entri di images.json.';
+          return;
+        }
+        files.forEach((entry, i) => thumbsEl.appendChild(buildThumb(entry, i)));
+        setActive(0);
+        wireScroll();
+      }catch(err){
+        console.error(err);
+        metaEl.textContent = 'Gagal memuat indeks. Pastikan /images/images.json valid dan dapat diakses.';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
